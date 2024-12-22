@@ -79,7 +79,6 @@ If you are a donator on AA, you can use your Key in `AA_DONATOR_API_KEY` to spee
 
 | Variable               | Description                   | Default Value           |
 | ---------------------- | ----------------------------- | ----------------------- |
-| `CLOUDFLARE_PROXY_URL` | Cloudflare bypass service URL | `http://localhost:8000` |
 | `PORT`                 | Container external port       | `8084`                  |
 
 ### Volume Configuration

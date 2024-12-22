@@ -25,7 +25,6 @@ INGEST_DIR.mkdir(exist_ok=True)
 # Network settings
 MAX_RETRY = int(os.getenv("MAX_RETRY", 3))
 DEFAULT_SLEEP = int(os.getenv("DEFAULT_SLEEP", 5))
-CLOUDFLARE_PROXY = os.getenv("CLOUDFLARE_PROXY_URL", "http://localhost:8000")
 AA_DONATOR_KEY = os.getenv("AA_DONATOR_KEY", None)
 
 # File format settings
@@ -46,3 +45,10 @@ FLASK_DEBUG = os.getenv("FLASK_DEBUG", "False").lower() == "true"
 # Logging settings
 LOG_FILE = f"{LOG_DIR}/cwa-bookd-ownloader.log"
 MAIN_LOOP_SLEEP_TIME = int(os.getenv("MAIN_LOOP_SLEEP_TIME", 5))
+
+# Docker settings
+DOCKERMODE = os.getenv('DOCKERMODE', 'false').lower().strip() in ['true', '1', 'yes', 'y']
+if DOCKERMODE:
+    from pyvirtualdisplay import Display
+    display = Display(visible=0, size=(800, 600))
+    display.start()
