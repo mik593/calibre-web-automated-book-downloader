@@ -1,6 +1,6 @@
 """Data structures and models used across the application."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from enum import Enum
 from config import INGEST_DIR, STATUS_TIMEOUT
@@ -27,6 +27,7 @@ class BookInfo:
     format: Optional[str] = None
     size: Optional[str] = None
     info: Optional[Dict[str, List[str]]] = None
+    download_urls: List[str] = field(default_factory=list)
 
 class BookQueue:
     """Thread-safe book queue manager."""
@@ -61,11 +62,11 @@ class BookQueue:
         with self._lock:
             self._update_status(book_id, status)
             
-    def get_status(self) -> Dict[str, Dict[str, BookInfo]]:
+    def get_status(self) -> Dict[QueueStatus, Dict[str, BookInfo]]:
         """Get current queue status."""
         self.refresh()
         with self._lock:
-            result = {status: {} for status in QueueStatus}
+            result: Dict[QueueStatus, Dict[str, BookInfo]] = {status: {} for status in QueueStatus}
             for book_id, status in self._status.items():
                 if book_id in self._book_data:
                     result[status][book_id] = self._book_data[book_id]

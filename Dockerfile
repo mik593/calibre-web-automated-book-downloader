@@ -13,6 +13,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     FLASK_DEBUG=0 \
     STATUS_TIMEOUT=3600 \
     PYTHONPATH=/app \
+    USE_CF_BYPASS=true \
+    AA_BASE_URL=https://annas-archive.org \
     UID=1000 \
     GID=100
 
