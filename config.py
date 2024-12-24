@@ -11,7 +11,7 @@ LOG_DIR = Path("/var/logs")
 
 TMP_DIR = Path(os.getenv("TMP_DIR", "/tmp/cwa-book-downloader"))
 
-INGEST_DIR = Path(os.getenv("INGEST_DIR", "/tmp/cwa-book-ingest"))
+INGEST_DIR = Path(os.getenv("INGEST_DIR", "/cwa-book-ingest"))
 STATUS_TIMEOUT = int(os.getenv("STATUS_TIMEOUT", 3600))
 
 # Create necessary directories
