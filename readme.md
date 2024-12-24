@@ -89,7 +89,6 @@ If diabling the cloduflare bypass, you will be using alternative download hosts,
 | ---------------------- | ----------------------------- | ----------------------- |
 | `PORT`                 | Container external port       | `8084`                  |
 
-`CLOUDFLARE_PROXY_URL` is ignored if `USE_CF_BYPASS` is set to `false`
 
 ### Volume Configuration
 

@@ -125,7 +125,7 @@ def _download_book(book_id: str) -> bool:
         logger.error(f"Error downloading book: {e}")
         return False
 
-def download_loop():
+def download_loop() -> None:
     """Background thread for processing download queue."""
     logger.info("Starting download loop")
     

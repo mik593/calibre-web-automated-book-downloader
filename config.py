@@ -22,8 +22,6 @@ INGEST_DIR.mkdir(exist_ok=True)
 # Network settings
 MAX_RETRY = int(os.getenv("MAX_RETRY", 3))
 DEFAULT_SLEEP = int(os.getenv("DEFAULT_SLEEP", 5))
-
-CLOUDFLARE_PROXY = os.getenv("CLOUDFLARE_PROXY_URL", "http://localhost:8000")
 USE_CF_BYPASS = os.getenv("USE_CF_BYPASS", "true").lower() in ["true", "yes", "1", "y"]
 
 # Anna's Archive settings
@@ -50,6 +48,6 @@ MAIN_LOOP_SLEEP_TIME = int(os.getenv("MAIN_LOOP_SLEEP_TIME", 5))
 # Docker settings
 DOCKERMODE = os.getenv('DOCKERMODE', 'false').lower().strip() in ['true', '1', 'yes', 'y']
 if DOCKERMODE:
-    from pyvirtualdisplay import Display
-    display = Display(visible=0, size=(800, 600))
+    from pyvirtualdisplay import Display # type: ignore
+    display = Display(visible=False, size=(800, 600))
     display.start()
