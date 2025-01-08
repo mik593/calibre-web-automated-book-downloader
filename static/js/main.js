@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const elements = {
         searchInput: document.getElementById('search-input'),
         searchButton: document.getElementById('search-button'),
-        resultsSection: document.getElementById('results-section'),
+        resultsSectionAccordion: document.getElementById('results-section-accordion'),
+        searchAccordion: document.getElementById('search-accordion'),
         resultsHeading: document.getElementById('results-heading'),
         resultsTable: document.getElementById('results-table'),
         resultsTableBody: document.querySelector('#results-table tbody'),
@@ -47,11 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         showLoading(element) {
-            element.style.display = 'block';
+            element.removeAttribute('hidden');
         },
 
         hideLoading(element) {
-            element.style.display = 'none';
+            element.setAttribute('hidden', '');
+        },
+
+        showAccordion(element) {
+            UIkit.accordion(element).toggle(1, true);
         },
 
         async fetchJson(url, options = {}) {
@@ -90,9 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 STATE.isSearching = true;
-                elements.resultsSection.classList.remove('collapsed');
                 utils.showLoading(elements.searchLoading);
 
+                if (!elements.searchAccordion.classList.contains('uk-open'))
+                {
+                    utils.showAccordion(elements.resultsSectionAccordion);
+                };
                 const data = await utils.fetchJson(
                     `${API_ENDPOINTS.search}?query=${encodeURIComponent(query)}`
                 );
@@ -161,12 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         createActionCell(book) {
             const buttonDetails = utils.createElement('button', {
-                className: 'details-button',
+                className: 'uk-button uk-button-default uk-align-center uk-margin-small uk-width-1-1',
                 onclick: () => bookDetails.show(book.id)
             }, [utils.createElement('span', { textContent: 'Details' })]);
 
             const downloadButton = utils.createElement('button', {
-                className: 'download-button',
+                className: 'uk-button uk-button-primary uk-align-center uk-margin-small uk-width-1-1',
                 onclick: () => bookDetails.downloadBook(book)
             }, [utils.createElement('span', { textContent: 'Download' })]);
 
@@ -221,9 +229,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         generateDetailsHTML(book) {
             return `
-                <div class="details-header">
-                    <img src="${book.preview || ''}" alt="Book Preview">
-                    <div class="details-info">
+
+                <div class="uk-card uk-card-default uk-child-width-1-2" uk-grid>
+                    <div class="uk-card-media-left uk-cover-container uk-padding">
+                        <img class="uk-height-medium" src="${book.preview || ''}" alt="Book Preview" uk-cover>
+                        <canvas width="299" height="461"></canvas>
+                    </div>
+                    <div class="uk-card-body">
                         <h3>${book.title || 'No title available'}</h3>
                         <p><strong>Author:</strong> ${book.author || 'N/A'}</p>
                         <p><strong>Publisher:</strong> ${book.publisher || 'N/A'}</p>
@@ -232,12 +244,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p><strong>Format:</strong> ${book.format || 'N/A'}</p>
                         <p><strong>Size:</strong> ${book.size || 'N/A'}</p>
                     </div>
+                    
+                    <button id="download-button" class="uk-button uk-button-primary" type="button">Download</button>
+                    <button id="close-details" class="uk-button uk-button-default uk-modal-close" type="button">Close</button>
                 </div>
-                ${this.generateInfoList(book.info)}
-                <div class="details-actions">
-                    <button id="download-button">Download</button>
-                    <button id="close-details">Close</button>
-                </div>
+                <ul uk-accordion>
+                    <li>
+                        <a class="uk-accordion-title" href>Further Information</a>
+                        <div class="uk-accordion-content">
+                            ${this.generateInfoList(book.info)}
+                        </div>
+                    </li>
+                </ul>
             `;
         },
 
@@ -250,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `)
                 .join('');
 
-            return `<ul class="details-info-list">${listItems}</ul>`;
+            return `<ul class="uk-list uk-list-bullet">${listItems}</ul>`;
         },
 
         async downloadBook(book) {
@@ -263,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 
                 modal.close();
-                elements.resultsSection.classList.add('collapsed');
                 status.fetch();
             } catch (error) {
                 console.error('Download error:', error);
@@ -403,11 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const query = elements.searchInput.value.trim();
                 if (query) search.performSearch(query);
             }
-        });
-
-        // Results section toggle
-        elements.resultsHeading.addEventListener('click', () => {
-            elements.resultsSection.classList.toggle('collapsed');
         });
 
         // Modal close on overlay click

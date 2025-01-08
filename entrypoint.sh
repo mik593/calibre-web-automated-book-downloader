@@ -1,6 +1,8 @@
 #!/bin/bash
+export INGEST_DIR=${INGEST_DIR:-/cwa-book-ingest}
 
-mkdir -p /var/logs
+mkdir -p /var/log/cwa-book-downloader
+mkdir -p "$INGEST_DIR"
 
 if [ "$UID" ] && [ -z "$GID" ]; then
     # Create group if it doesn't exist
@@ -15,12 +17,10 @@ if [ "$UID" ] && [ -z "$GID" ]; then
 fi
 
 
-if [ "$INGEST_DIR" ]; then
-    # Adjust ownership of application directories
-    mkdir -p "$INGEST_DIR"
-    chown -R $UID:$GID /app "$INGEST_DIR" /var/logs
-fi
+# Adjust ownership of application directories
+mkdir -p "$INGEST_DIR"
+chown -R $UID:$GID /app "$INGEST_DIR" /var/log/cwa-book-downloader
 
 # Switch to the created user and execute the main command
 cd /app
-exec gosu $UID "python" -m app
+exec gosu $UID "$@"
