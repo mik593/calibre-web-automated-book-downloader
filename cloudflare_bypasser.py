@@ -114,7 +114,9 @@ def _genScraper() -> ChromiumPage:
         "-disable-features=FlashDeprecationWarning,EnablePasswordsAccountStorage",
         "-deny-permission-prompts",
         "-disable-gpu",
+        "-no-sandbox",
         "-accept-lang=en-US",
+        "-remote-debugging-port=9222"
     ]
 
     options = _get_chromium_options(arguments)
