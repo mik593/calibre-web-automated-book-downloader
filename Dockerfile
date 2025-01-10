@@ -43,5 +43,8 @@ EXPOSE ${FLASK_PORT}
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${FLASK_PORT}/request/api/status || exit 1
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/app/entrypoint.sh"]
+# Entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Start application
+CMD ["python", "-m", "app"]
