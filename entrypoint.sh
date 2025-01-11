@@ -23,4 +23,4 @@ chown -R $UID:$GID /app "$INGEST_DIR" /var/log/cwa-book-downloader
 
 # Switch to the created user and execute the main command
 cd /app
-exec gosu $UID "$@"
+exec gosu $UID python -m app
