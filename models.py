@@ -108,3 +108,9 @@ class BookQueue:
 
 # Global instance of BookQueue
 book_queue = BookQueue()
+
+@dataclass
+class SearchFilters:
+    isbn: Optional[List[str]] = None
+    author: Optional[List[str]] = None
+    title: Optional[List[str]] = None

@@ -2,8 +2,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const elements = {
-        searchInput: document.getElementById('search-input'),
-        searchButton: document.getElementById('search-button'),
+        search: {
+            searchInput: document.getElementById('search-input'),
+            searchButton: document.getElementById('search-button'),
+            advanced: {
+                searchFiltersForm: document.getElementById('search-filters'),
+                addFilterButtons: document.getElementsByClassName('add-filter-button')
+            }
+        },
         resultsSectionAccordion: document.getElementById('results-section-accordion'),
         searchAccordion: document.getElementById('search-accordion'),
         resultsHeading: document.getElementById('results-heading'),
@@ -21,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentBookDetails = null;
     const STATE = {
         isSearching: false,
-        isLoadingDetails: false
+        isLoadingDetails: false,
     };
 
     // Constants
@@ -32,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         download: '/request/api/download',
         status: '/request/api/status'
     };
+    const FILTERS = ['isbn', 'author', 'title'];
 
     // Utility Functions
     const utils = {
@@ -101,8 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 {
                     utils.showAccordion(elements.resultsSectionAccordion);
                 };
+                
                 const data = await utils.fetchJson(
-                    `${API_ENDPOINTS.search}?query=${encodeURIComponent(query)}`
+                    `${API_ENDPOINTS.search}?${query}`
                 );
                 
                 this.displayResults(data);
@@ -112,6 +120,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 STATE.isSearching = false;
                 utils.hideLoading(elements.searchLoading);
             }
+        },
+
+        buildQuery() {
+            let queryParams = [];
+
+            if(elements.search.searchInput.value.trim()) {
+                queryParams.push(`query=${encodeURIComponent(elements.search.searchInput.value.trim())}`);
+            }
+
+            if(elements.search.advanced.searchFiltersForm.hasAttribute('hidden')) {
+                //Not advanced search
+                return queryParams.join('&');
+            }
+
+            FILTERS.forEach(filterType => {
+                const inputs = document.querySelectorAll(`[id^="${filterType}-input-"]`);
+            
+                inputs.forEach(input => {
+                    const value = input.value.trim();
+                    if (value) {  
+                        queryParams.push(`${filterType}=${encodeURIComponent(value.trim())}`);
+                    }
+                });
+            });
+
+            return queryParams.join('&');
         },
 
         displayResults(books) {
@@ -409,16 +443,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     function setupEventListeners() {
         // Search events
-        elements.searchButton.addEventListener('click', () => {
-            const query = elements.searchInput.value.trim();
-            if (query) search.performSearch(query);
+        elements.search.searchButton.addEventListener('click', () => {
+            const query = search.buildQuery();
+            if(query) search.performSearch(query);
         });
 
-        elements.searchInput.addEventListener('keydown', (e) => {
+        elements.search.searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const query = elements.searchInput.value.trim();
-                if (query) search.performSearch(query);
+
+                const query = search.buildQuery();
+                if(query) search.performSearch(query);
             }
         });
 
@@ -434,6 +469,44 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Escape' && elements.modalOverlay.classList.contains('active')) {
                 modal.close();
             }
+        });
+
+        
+        // Search Filter Add Buttons
+        const addFilterButtons = Array.from(elements.search.advanced.addFilterButtons);
+        addFilterButtons.forEach(x => {
+            x.addEventListener('click', () => {
+                const filterType = x.id.split('add-filter-')[1];
+
+                const inputs = document.querySelectorAll(`[id^="${filterType}-input-"]`);
+                const lastElement = inputs[inputs.length - 1];
+
+                const lastIndex = lastElement ? parseInt(lastElement.id.split('-')[2], 10) : 0
+
+                const newElement = lastElement.parentElement.cloneNode(true);
+
+                const newId = `${filterType}-input-${lastIndex + 1}`;
+                const input = newElement.getElementsByTagName('input')[0];
+                input.id = newId;
+                input.value = '';
+
+                const button = newElement.getElementsByTagName('button')[0];
+                button.hidden = false;
+
+                lastElement.parentElement.insertAdjacentElement('afterend', newElement);
+
+                button.addEventListener('click', (e) => {
+                    e.target.parentElement.remove();
+                });
+            })
+        });
+
+        // Delete Filter Buttons
+        const deleteFilterButtons = Array.from(document.getElementsByClassName('del-filter'));
+        deleteFilterButtons.forEach(x => {
+            x.addEventListener('click', () => {
+                x.closest('.search-filter').remove();
+            })
         });
     }
 

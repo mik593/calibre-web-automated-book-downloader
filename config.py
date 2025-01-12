@@ -7,12 +7,12 @@ _SUPPORTED_BOOK_LANGUAGE = ['en','zh','ru','es','fr','de','it','pt','pl','bg','n
 
 # Directory settings
 BASE_DIR = Path(__file__).resolve().parent
-LOG_DIR = Path("/var/log/cwa-book-downloader")
+LOG_DIR = Path(r"E:\Michael\Documents\Freelance\bookscalibre\cwa-book-dl\cwabl-logs")
 LOG_DIR.mkdir(exist_ok=True)
 
-TMP_DIR = Path(os.getenv("TMP_DIR", "/tmp/cwa-book-downloader"))
+TMP_DIR = Path(os.getenv("TMP_DIR", r"E:\Michael\Documents\Freelance\bookscalibre\cwa-book-dl\cwabl-tempdir"))
 
-INGEST_DIR = Path(os.getenv("INGEST_DIR", "/tmp/cwa-book-ingest"))
+INGEST_DIR = Path(os.getenv("INGEST_DIR", r"E:\Michael\Documents\Freelance\bookscalibre\cwa-book-dl\cwabl-ingest"))
 STATUS_TIMEOUT = int(os.getenv("STATUS_TIMEOUT", 3600))
 
 # Create necessary directories

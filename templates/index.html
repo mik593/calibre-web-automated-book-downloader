@@ -30,6 +30,42 @@
                         <input class="uk-search-input" type="search" placeholder="Search by ISBN, title, author..." aria-label="Search books" id="search-input">
                         <button class="uk-search-icon-flip" uk-search-icon id="search-button" type="button"></button>
                     </form>
+                    <button class="uk-button uk-button-default uk-float-right" uk-toggle="target: #search-filters" type="button">Advanced Search</button>
+                    <form hidden id="search-filters" class="uk-search uk-search-default uk-inline uk-width-expand uk-flex uk-flex-wrap">
+                        <div class="search-filter">
+                            <label>ISBN</label>
+                            <div class="uk-flex uk-flex-wrap">
+                                <input class="uk-search-input uk-width-4-5" type="search" placeholder="ISBN..." aria-label="Search by ISBN" id="isbn-input-1">
+                                <button hidden class="del-filter" type="button">-</button>
+                            </div>
+                            <span class="uk-text-center uk-display-block uk-margin-small-top">
+                                <button id="add-filter-isbn" class="add-filter-button uk-button uk-button-default" type="button">+</button>
+                            </span>
+                        </div>
+                        <div class="search-filter">
+                            <label>Author</label>
+                            <div class="uk-flex uk-flex-wrap">
+                                <input class="uk-search-input uk-width-4-5" type="search" placeholder="Author..." aria-label="Search by author" id="author-input-1">
+                                <button hidden class="del-filter" type="button">-</button>
+                            </div>
+                            <span class="uk-text-center uk-display-block uk-margin-small-top">
+                                <button id="add-filter-author" class="add-filter-button uk-button uk-button-default" type="button">+</button>
+                            </span>
+                        </div>
+                        <div class="search-filter">
+                            <label>Title</label>
+                            <div class="uk-flex uk-flex-wrap">
+                                <input class="uk-search-input uk-width-4-5" type="search" placeholder="Title" aria-label="Search by title" id="title-input-1">
+                                <button hidden class="del-filter" type="button">-</button>
+                            </div>
+                            <span class="uk-text-center uk-display-block uk-margin-small-top">
+                                <button id="add-filter-title" class="add-filter-button uk-button uk-button-default" type="button">+</button>
+                            </span>
+                        </div>
+                        <div class="uk-flex uk-margin-auto-bottom">
+                            <button class="uk-button uk-button-default uk-margin-small-top" id="search-button" type="button">Search</button>
+                        </div>
+                    </form>
                 </div>
             </section>
 

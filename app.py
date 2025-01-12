@@ -11,6 +11,8 @@ from logger import setup_logger
 from config import FLASK_HOST, FLASK_PORT, FLASK_DEBUG
 import backend
 
+from models import SearchFilters
+
 logger = setup_logger(__name__)
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
@@ -85,16 +87,26 @@ def api_search():
 
     Query Parameters:
         query (str): Search term (ISBN, title, author, etc.)
+        isbn (str): Book ISBN
+        author (str): Book Author
+        title (str): Book Title
 
     Returns:
         flask.Response: JSON array of matching books or empty array if no query.
     """
     query = request.args.get('query', '')
-    if not query:
+
+    filters = SearchFilters(
+        isbn=request.args.getlist('isbn'),
+        author=request.args.getlist('author'),
+        title=request.args.getlist('title')
+    )
+
+    if not query and not any(vars(filters).values()):
         return jsonify([])
 
     try:
-        books = backend.search_books(query)
+        books = backend.search_books(query, filters)
         return jsonify(books)
     except Exception as e:
         logger.error(f"Search error: {e}")
