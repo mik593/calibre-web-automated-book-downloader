@@ -288,16 +288,7 @@ def _get_download_url(link: str, title: str) -> str:
     """Extract actual download URL from various source pages."""
 
     url = ""
-
-<<<<<<< HEAD
-    html = network.html_get_page(link)
-    if html == "":
-        return ""
     
-    if link.startswith(f"{AA_BASE_URL}/dyn/api/fast_download.json"):
-        url = str(json.loads(html).get("download_url", ""))
-    else:
-=======
     if link.startswith(f"{AA_BASE_URL}/dyn/api/fast_download.json"):
         page = network.html_get_page(link)
         url = json.loads(page).get("download_url")
@@ -309,7 +300,6 @@ def _get_download_url(link: str, title: str) -> str:
         if html == "":
             return ""
         
->>>>>>> main
         soup = BeautifulSoup(html, 'html.parser')
         
         if link.startswith("https://z-lib.gs"):
