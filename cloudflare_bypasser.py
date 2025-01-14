@@ -135,7 +135,8 @@ def _reset_browser() -> None:
         _defaultTab.close()
     _defaultTab = None
     # Force kill the browser
-    os.system("pkill -f *chrom*")
+    os.system("pkill -f -i *chrom*")
+    os.system("pkill -f -i xvfb")
     time.sleep(1)
 
 def _init_browser(retry : int = MAX_RETRY) -> ChromiumTab:
