@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const elements = {
         searchInput: document.getElementById('search-input'),
         searchButton: document.getElementById('search-button'),
+        selectAllCheckbox: document.getElementById('select-all-checkbox'),
+        downloadSelectedButton: document.getElementById('download-selected-button'),
         resultsSectionAccordion: document.getElementById('results-section-accordion'),
         searchAccordion: document.getElementById('search-accordion'),
         resultsHeading: document.getElementById('results-heading'),
@@ -18,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // State
-    let currentBookDetails = null;
+    let modalDetails = null;
+    const selectedBooks = new Set();
     const STATE = {
         isSearching: false,
         isLoadingDetails: false
@@ -85,6 +88,144 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             return element;
+        },
+
+        sortResultsTable(column, order = 'asc') {
+            const rows = Array.from(elements.resultsTableBody.querySelectorAll('tr'));
+            const headers = document.querySelectorAll('#results-table thead th');
+
+            const parseFileSize = (size) => {
+                const match = size.match(/([\d.]+)([KMGT]B)/i);
+                if (!match) return 0;
+                const [_, value, unit] = match;
+                const multiplier = { KB: 1, MB: 1024, GB: 1024 * 1024, TB: 1024 * 1024 * 1024 };
+                return parseFloat(value) * (multiplier[unit.toUpperCase()] || 1);
+            };
+
+            const parseTitle = (title) => {
+                return title.replace(/^(The)\s+/i, '').trim();
+            }
+
+            const columnName = headers[column].textContent.trim().toLowerCase();
+
+            const getCellValue = (row, column) => {
+                const cell = row.querySelector(`td:nth-child(${column + 1})`);
+                const text = cell ? cell.textContent.trim() : '';
+                if (columnName === 'size') return parseFileSize(text);
+                if (columnName === 'title') return parseTitle(text);
+                return text;
+            };
+
+            rows.sort((a, b) => {
+                const valA = getCellValue(a, column);
+                const valB = getCellValue(b, column);
+
+                if (!isNaN(valA) && !isNaN(valB)) {
+                    return order === 'asc' ? valA - valB : valB - valA;
+                }
+                return order === 'asc'
+                    ? valA.localeCompare(valB)
+                    : valB.localeCompare(valA);
+            });
+
+            elements.resultsTableBody.innerHTML = '';
+            rows.forEach(row => elements.resultsTableBody.appendChild(row));
+
+            headers.forEach(header => {
+                const icon = header.querySelector('.sort-icon');
+                if (icon) {
+                    icon.removeAttribute('uk-icon');
+                }
+            });
+
+            const currentHeader = headers[column];
+            const icon = currentHeader.querySelector('.sort-icon');
+            if (icon) {
+                icon.setAttribute('uk-icon', `icon: ${order === 'asc' ? 'triangle-up' : 'triangle-down'}`);
+            }
+        },
+
+        updateDownloadSelectedButton() {
+            elements.downloadSelectedButton.disabled = selectedBooks.size === 0;
+        },
+
+        handleCheckboxChange(event) {
+            const checkbox = event.target;
+            if (checkbox.checked) {
+                selectedBooks.add(checkbox.value);
+            } else {
+                selectedBooks.delete(checkbox.value);
+            }
+            utils.updateDownloadSelectedButton();
+        },
+
+        async handleDownloadSelected() {
+            if (selectedBooks.size === 0) return;
+
+            const bookIds = Array.from(selectedBooks);
+            const books = bookIds.map((bookId) => {
+                const row = document.querySelector(`#book-${bookId}`).closest('tr');
+                return {
+                    title: row.querySelector('td:nth-child(4)').textContent,
+                    author: row.querySelector('td:nth-child(5)').textContent
+                };
+            });
+
+            // Confirmation modal
+            const confirmationContent = `
+                <h2>Confirm Download</h2>
+                <p>Are you sure you want to download ${books.length} book${books.length > 1 ? 's' : ''}?</p>
+                <div class="uk-overflow-auto">
+                    <table class="uk-table uk-table-divider uk-table-small">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Author</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${books.map((book) => `
+                                <tr>
+                                    <td>${book.title}</td>
+                                    <td>${book.author}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="uk-flex uk-flex-between uk-margin-top">
+                    <button id="cancel-download" class="uk-button uk-button-default">Cancel</button>
+                    <button id="confirm-download" class="uk-button uk-button-primary">Download</button>
+                </div>
+            `;
+
+            elements.detailsContainer.innerHTML = confirmationContent;
+
+            document.getElementById('cancel-download').addEventListener('click', modal.close);
+            document.getElementById('confirm-download').addEventListener('click', async () => {
+                await utils.confirmDownload(bookIds);
+            });
+
+            modal.open();
+        },
+
+        async confirmDownload(bookIds) {
+            bookIds.map((bookId) =>
+                utils.fetchJson(`${API_ENDPOINTS.download}?id=${encodeURIComponent(bookId)}`)
+            );
+
+            // Uncheck all selected checkboxes
+            selectedBooks.forEach((bookId) => {
+                const checkbox = document.getElementById(`book-${bookId}`);
+                if (checkbox) checkbox.checked = false;
+            });
+
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+
+            selectedBooks.clear();
+            utils.updateDownloadSelectedButton();
+            modal.close();
         }
     };
 
@@ -92,19 +233,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const search = {
         async performSearch(query) {
             if (STATE.isSearching) return;
-            
+
             try {
                 STATE.isSearching = true;
                 utils.showLoading(elements.searchLoading);
 
-                if (!elements.searchAccordion.classList.contains('uk-open'))
-                {
+                if (!elements.searchAccordion.classList.contains('uk-open')) {
                     utils.showAccordion(elements.resultsSectionAccordion);
                 };
                 const data = await utils.fetchJson(
                     `${API_ENDPOINTS.search}?query=${encodeURIComponent(query)}`
                 );
-                
+
                 this.displayResults(data);
             } catch (error) {
                 this.handleSearchError(error);
@@ -116,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         displayResults(books) {
             elements.resultsTableBody.innerHTML = '';
-            
+
             if (!books.length) {
                 this.displayNoResults();
                 return;
@@ -139,7 +279,19 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         createBookRow(book, index) {
+            const checkboxCell = utils.createElement('td', {}, [
+                utils.createElement('input', {
+                    type: 'checkbox',
+                    className: 'uk-checkbox',
+                    id: 'book-' + book.id,
+                    name: 'book-' + book.id,
+                    value: book.id,
+                    onchange: utils.handleCheckboxChange
+                })
+            ]);
+
             return utils.createElement('tr', {}, [
+                checkboxCell,
                 utils.createElement('td', { textContent: index + 1 }),
                 this.createPreviewCell(book.preview),
                 utils.createElement('td', { textContent: book.title || 'N/A' }),
@@ -207,8 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const book = await utils.fetchJson(
                     `${API_ENDPOINTS.info}?id=${encodeURIComponent(bookId)}`
                 );
-                
-                currentBookDetails = book;
+
+                modalDetails = book;
                 this.displayDetails(book);
             } catch (error) {
                 this.handleDetailsError(error);
@@ -219,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         displayDetails(book) {
             elements.detailsContainer.innerHTML = this.generateDetailsHTML(book);
-            
+
             // Add event listeners
             document.getElementById('download-button')
                 .addEventListener('click', () => this.downloadBook(book));
@@ -279,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await utils.fetchJson(
                     `${API_ENDPOINTS.download}?id=${encodeURIComponent(book.id)}`
                 );
-                
+
                 modal.close();
                 status.fetch();
             } catch (error) {
@@ -318,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         display(data) {
             elements.statusTableBody.innerHTML = '';
-            
+
             // Handle each status type
             Object.entries(data).forEach(([status, booksInStatus]) => {
                 // If the status section has books
@@ -363,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         createPreviewCell(previewUrl) {
             const cell = utils.createElement('td');
-            
+
             if (previewUrl) {
                 const img = utils.createElement('img', {
                     src: previewUrl,
@@ -374,14 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 cell.textContent = 'N/A';
             }
-            
+
             return cell;
         },
 
         handleError(error) {
             console.error('Status error:', error);
             elements.statusTableBody.innerHTML = '';
-            
+
             const errorRow = utils.createElement('tr', {}, [
                 utils.createElement('td', {
                     colSpan: '4',
@@ -389,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     textContent: 'Error loading status. Will retry automatically.'
                 })
             ]);
-            
+
             elements.statusTableBody.appendChild(errorRow);
         }
     };
@@ -402,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         close() {
             elements.modalOverlay.classList.remove('active');
-            currentBookDetails = null;
+            modalDetails = null;
         }
     };
 
@@ -435,6 +587,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.close();
             }
         });
+        // Download selected books
+        elements.downloadSelectedButton.addEventListener('click', utils.handleDownloadSelected);
+
+        // Check/uncheck all book checkboxes
+        elements.selectAllCheckbox.addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+
+            document.querySelectorAll('.uk-checkbox').forEach((checkbox) => {
+                if (checkbox !== elements.selectAllCheckbox) {
+                    checkbox.checked = isChecked;
+                    if (isChecked) {
+                        selectedBooks.add(checkbox.value);
+                    } else {
+                        selectedBooks.delete(checkbox.value);
+                    }
+                }
+            });
+            utils.updateDownloadSelectedButton();
+        });
+
+        function setupSorting() {
+            const headers = document.querySelectorAll('#results-table thead th[data-sort]');
+            headers.forEach((header) => {
+                let sortOrder = 'asc';
+                header.addEventListener('click', () => {
+                    const allHeaders = Array.from(document.querySelectorAll('#results-table thead th'));
+                    const columnIndex = allHeaders.indexOf(header);
+                    utils.sortResultsTable(columnIndex, sortOrder);
+                    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+                });
+            });
+        }
+
+        setupSorting();
+
     }
 
     // Initialize
